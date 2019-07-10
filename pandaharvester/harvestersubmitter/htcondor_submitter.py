@@ -324,9 +324,10 @@ def make_a_jdl(workspec, template, n_core_per_node, log_dir, panda_queue_name, e
     io_intensity = workspec.ioIntensity if workspec.ioIntensity else 0
     ce_info_dict = ce_info_dict.copy()
     batch_log_dict = batch_log_dict.copy()
+    pilot_url = ''
     # possible override by AGIS special_par
     if special_par:
-        special_par_attr_list = ['queue', 'maxWallTime', 'xcount', ]
+        special_par_attr_list = ['queue', 'maxWallTime', 'xcount', 'pilot_url',]
         _match_special_par_dict = { attr: re.search('\({attr}=([^)]+)\)'.format(attr=attr), special_par) \
                                         for attr in special_par_attr_list }
         for attr, _match in _match_special_par_dict.items():
@@ -338,6 +339,8 @@ def make_a_jdl(workspec, template, n_core_per_node, log_dir, panda_queue_name, e
                 request_walltime = int(_match.group(1))
             elif attr == 'xcount':
                 n_core_total = int(_match.group(1))
+            elif attr == 'pilot_url':
+                pilot_url = '--piloturl %s' % str(_match.group(1))
             tmpLog.debug('job attributes override by AGIS special_par: {0}={1}'.format(attr, str(_match.group(1))))
     # derived job attributes
     n_node = _div_round_up(n_core_total, n_core_per_node)
@@ -385,6 +388,7 @@ def make_a_jdl(workspec, template, n_core_per_node, log_dir, panda_queue_name, e
         pilotResourceTypeOption=_get_resource_type(workspec.resourceType, is_unified_queue, True, pilot_version),
         ioIntensity=io_intensity,
         pilotType=workspec.pilotType,
+        pilotURL=pilot_url,
         )
     # save jdl to submit description file
     tmpFile.write(jdl_str)
